@@ -41,6 +41,8 @@ def std_exceptions(etype, value, tb):
         pass
     else:
         sys.__excepthook__(etype, value, tb)
+
+
 sys.excepthook = std_exceptions
 
 
@@ -58,6 +60,7 @@ class bcolors:
     LIGHTRED = '\033[91m'
     CYAN = '\033[36m'
     UNDERLINE = '\033[4m'
+
 
 def get_inodePidMap():
     # glob glob glob it all
@@ -85,6 +88,7 @@ def get_inodePidMap():
             inodePidMap[inode].append(int(pid))
     return inodePidMap
 
+
 def ipv4(addr):
     """ Convert /proc IPv4 hex address into standard IPv4 notation. """
 
@@ -106,6 +110,7 @@ def ipv6(addr):
     # now we can use standard network APIs to format the address
     addr = socket.inet_ntop(socket.AF_INET6, addr)
     return addr
+
 
 def populateInodes():
     """ Get all the inodes that are listening to connections
@@ -141,6 +146,7 @@ def populateInodes():
                 inodes[int(inode)] = [ip, port]
     return inodes
 
+
 def get_listeningPorts(inodes, inodePidMap):
     listeningPorts = collections.defaultdict(list)
     for inode in inodes:
@@ -163,20 +169,6 @@ def get_listeningPorts(inodes, inodePidMap):
                     pass
     return listeningPorts
 
-def get_portOutput(listeningPorts):
-    apache = "(httpd|apache)"
-    nginx = "(nginx)"
-    for k in listeningPorts:
-        if re.search(apache, str(k)):
-            webserver = "apache"
-            print("==============================")
-            print(bcolors.YELLOW + "apache " + bcolors.ENDC +  "is listening on %s"
-                  % listeningPorts[k])
-        elif re.search(nginx, str(k)):
-            print("==============================")
-            print(bcolors.GREEN + "nginx " + bcolors.ENDC + "is listening on %s"
-                  % listeningPorts[k])
-
 
 def get_domain():
     ''' Function that prompts the user for which domain to look for
@@ -196,30 +188,33 @@ def get_domain():
     return domain
 
 
-def get_dns(domain):
-    site = urllib2.Request("https://dns.google/resolve?name=" + domain + "&type=A")
-    response = urllib2.urlopen(site, timeout=5).read()
-    resp_json = json.loads(response)
+def output_dns(domain):
     try:
-        dns = resp_json['Answer'][0]['data']
-        print (domain + " points to " + bcolors.CYAN + dns + bcolors.ENDC)
-    except (KeyError):
-        print("There is no A record for this domain")
-    return domain
+        site = urllib2.Request("https://dns.google/resolve?name="
+                               + domain + "&type=A")
+        response = urllib2.urlopen(site, timeout=5).read()
+        resp_json = json.loads(response)
+        if resp_json.get('Status') == 0:
+            dns = resp_json['Answer'][0]['data']
+            print (domain + " points to " + bcolors.CYAN + dns + bcolors.ENDC)
+        else:
+            print("There is no A record for this domain")
+    except (socket.timeout):
+        get_dns_locally(domain)
 
-#def get_dns(domain):
-#    '''
-#    Looks for the "A" record of the domain using the Name Server
-#    from the server, if DNS doctrine is enabled on the FW you will
-#     see the private IP of the server
-#    '''
-#    try:
-#        dns = socket.gethostbyname(domain)
-#        print (domain + " points to " + bcolors.CYAN + dns + bcolors.ENDC)
-#        print("==============================")
-#    except (socket.gaierror, UnboundLocalError):
-#        print("There is no A record for this domain")
-#    return domain
+
+def output_dns_locally(domain):
+    '''
+    Looks for the "A" record of the domain using the Name Server
+    from the server, if DNS doctrine is enabled on the FW you will
+     see the private IP of the server
+    '''
+    try:
+        dns = socket.gethostbyname(domain)
+        print (domain + " points to " + bcolors.CYAN + dns + bcolors.ENDC)
+        print("==============================")
+    except (socket.gaierror, UnboundLocalError):
+        print("There is no A record for this domain")
 
 
 def get_log_dir(varname):
@@ -472,9 +467,11 @@ def vhosts_files_parser(vhosts_files, apache_root):
     '''
     vhosts_directives = []
     if len(vhosts_files) == 0:
-        print("No Apache vhosts found for the domain")
+        print("No " + bcolors.YELLOW + "Apache" + bcolors.ENDC
+              + " vhosts found for the domain")
     for vhost_file in vhosts_files:
-        vhosts_directives.extend(apache_directive_finder(vhost_file, apache_root))
+        vhosts_directives.extend(apache_directive_finder
+                                 (vhost_file, apache_root))
     return vhosts_directives
 
 
@@ -508,31 +505,12 @@ def apache_default_log(vhosts):
                 vhost['CustomLog'] = "/var/log/httpd/ssl-access_log"
             if 'ErrorLog' not in vhost:
                 vhost['ErrorLog'] = "/var/log/httpd/ssl-error_log"
-        else: 
+        else:
             if 'CustomLog' not in vhost:
                 vhost['CustomLog'] = "/var/log/httpd/access_log"
             if 'ErrorLog' not in vhost:
                 vhost['ErrorLog'] = "/var/log/httpd/error_log"
     return vhosts
-
-
-def apache_output(vhosts):
-    for entry in vhosts:
-        for k in sorted(entry.keys()):
-            if k == '.Vhost file':
-                print("==============================")
-                print(bcolors.YELLOW + '%15s' % "Vhost File"+':  '
-                      + bcolors.ENDC + str(entry[k]))
-            elif k == '<VirtualHost':
-                print(bcolors.LIGHTRED + '%15s' % (str(k))+':  '
-                      + bcolors.ENDC + str(entry[k]))
-            elif k == 'ServerName':
-                print(bcolors.LIGHTRED + '%15s' % (str(k))+':  '
-                      + bcolors.ENDC + str(entry[k]))
-                print("==============================")
-            else:
-                print(bcolors.LIGHTRED + '%15s' % (str(k))+':  '
-                      + bcolors.ENDC + str(entry[k]))
 
 
 def nginx_find_files(directory, regex):
@@ -693,7 +671,8 @@ def nginx_directive_finder(serverblocks_file):
                         serverblock[directive] = argument
                     except:
                         pass
-                elif re.match(r"^(\"|')?access_log|^(\"|')?error_log", no_white):
+                elif re.match(r"^(\"|')?access_log|^(\"|')?error_log",
+                              no_white):
                     try:
                         serverblock = directives[i]
                         directive = no_white.split()[0].strip('"\'')
@@ -704,7 +683,8 @@ def nginx_directive_finder(serverblocks_file):
                             serverblock[directive] = argument
                     except:
                         pass
-                elif re.match(r"^(\"|')?proxy_pass|^(\"|')?fastcgi_pass", no_white):
+                elif re.match(r"^(\"|')?proxy_pass|^(\"|')?fastcgi_pass",
+                              no_white):
                     try:
                         serverblock = directives[i]
                         directive = no_white.split()[0].strip('"\'')
@@ -765,7 +745,8 @@ def serverblocks_files_parser(serverblocks_files):
     and call the function to extract the main directives
     '''
     if len(serverblocks_files) == 0:
-        print("No Nginx server blocks found for the domain")
+        print("No " + bcolors.GREEN + "Nginx" + bcolors.ENDC
+              + " server blocks were found for the domain")
     serverblocks_directives = []
     for serverblock_file in serverblocks_files:
         serverblocks_directives.extend(
@@ -783,6 +764,39 @@ def serverblock_organizer(serverblocks_directives, DOMAIN):
         if DOMAIN in block_entry['server_name']:
             serverblocks.append(block_entry)
     return serverblocks
+
+
+def output_PortIp(listeningPorts):
+    apache = "(httpd|apache)"
+    nginx = "(nginx)"
+    for k in listeningPorts:
+        if re.search(apache, str(k)):
+            print("==============================")
+            print(bcolors.YELLOW + "Apache " + bcolors.ENDC +
+                  "is listening on %s" % listeningPorts[k])
+        elif re.search(nginx, str(k)):
+            print("==============================")
+            print(bcolors.GREEN + "Nginx " + bcolors.ENDC +
+                  "is listening on %s" % listeningPorts[k])
+
+
+def apache_output(vhosts):
+    for entry in vhosts:
+        for k in sorted(entry.keys()):
+            if k == '.Vhost file':
+                print("==============================")
+                print(bcolors.YELLOW + '%15s' % "Vhost File"+':  '
+                      + bcolors.ENDC + str(entry[k]))
+            elif k == '<VirtualHost':
+                print(bcolors.LIGHTRED + '%15s' % (str(k))+':  '
+                      + bcolors.ENDC + str(entry[k]))
+            elif k == 'ServerName':
+                print(bcolors.LIGHTRED + '%15s' % (str(k))+':  '
+                      + bcolors.ENDC + str(entry[k]))
+                print("==============================")
+            else:
+                print(bcolors.LIGHTRED + '%15s' % (str(k))+':  '
+                      + bcolors.ENDC + str(entry[k]))
 
 
 def nginx_output(serverblocks):
@@ -808,12 +822,12 @@ def nginx_output(serverblocks):
 
 def main():
     DOMAIN = get_domain()
-    get_dns(DOMAIN)
+    output_dns(DOMAIN)
     apache, IS_APACHE, nginx, IS_NGINX = os_finder()
     inodePidMap = get_inodePidMap()
     inodes = populateInodes()
     listeningPorts = get_listeningPorts(inodes, inodePidMap)
-    portOutput = get_portOutput(listeningPorts)
+    portOutput = output_PortIp(listeningPorts)
 
     if IS_APACHE:
         apache_root = apache_root_finder(apache)
@@ -824,7 +838,7 @@ def main():
         apache_warn_include(vhosts)
         apache_default_log(vhosts)
         apache_output(vhosts)
-        
+
     if IS_NGINX:
         NGINX_INCLUDE_FILES = nginx_find_include(conf=nginx)
         serverblocks_files = nginx_domain_search(NGINX_INCLUDE_FILES, DOMAIN)
@@ -835,4 +849,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
