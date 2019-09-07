@@ -1,7 +1,7 @@
 #! /bin/python
 #
 # Author:       Rafael Tanaka
-# Source:       https://github.com/massaox/vhost_finder
+# Source:       https://github.com/massaox/domain_finder
 # Version 1.0
 
 import re
