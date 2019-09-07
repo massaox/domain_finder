@@ -41,7 +41,7 @@ sys.excepthook = std_exceptions
 
 class bcolors:
     '''
-    Class used for colour formatting
+    Class used for color formatting
     '''
     HEADER = '\033[95m'
     RED = '\033[91m'
@@ -199,14 +199,14 @@ def output_dns(domain):
     it will resort the the Name Servers configured in the server
     '''
     try:
-        site = urllib2.Request("https://dns.google/resolve?name="
-                               + domain + "&type=A")
+        site = urllib2.Request("https://dns.google/resolve?name={}&type=A".format(domain))
         response = urllib2.urlopen(site, timeout=5).read()
         resp_json = json.loads(response)
         if resp_json.get('Status') == 0:
             try:
                 dns = resp_json['Answer'][0]['data']
-                print (domain + " points to " + bcolors.CYAN + dns + bcolors.ENDC)
+                print("{} points to{} {} {}".format(domain, bcolors.CYAN, dns,
+                bcolors.ENDC))
             except (KeyError):
                 print("There is no A record for this domain")
         else:
