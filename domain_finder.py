@@ -223,7 +223,8 @@ def output_dns_locally(domain):
     '''
     try:
         dns = socket.gethostbyname(domain)
-        print (domain + " points to " + bcolors.CYAN + dns + bcolors.ENDC)
+        print("{} points to{} {} {}".format(domain, bcolors.CYAN, dns,
+        bcolors.ENDC))
         print("==============================")
     except (socket.gaierror, UnboundLocalError):
         print("There is no A record for this domain")
