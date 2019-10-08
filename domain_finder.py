@@ -199,14 +199,16 @@ def output_dns(domain):
     it will resort the the Name Servers configured in the server
     '''
     try:
-        site = urllib2.Request("https://dns.google/resolve?name={}&type=A".format(domain))
+        #site = urllib2.Request("https://dns.google/resolve?name={}&type=A".format(domain))
+        site = urllib2.Request("https://dns.google/resolve?name=" + domain + "&type=A")
         response = urllib2.urlopen(site, timeout=5).read()
         resp_json = json.loads(response)
         if resp_json.get('Status') == 0:
             try:
                 dns = resp_json['Answer'][0]['data']
-                print("{} points to{} {} {}".format(domain, bcolors.CYAN, dns,
-                bcolors.ENDC))
+                #print("{} points to{} {} {}".format(domain, bcolors.CYAN, dns,
+                #bcolors.ENDC))
+                print (domain + " points to " + bcolors.CYAN + dns + bcolors.ENDC)
             except (KeyError):
                 print("There is no A record for this domain")
         else:
@@ -316,7 +318,7 @@ def get_apache_include(conf, apacheRoot, apacheIncludeFiles,
     '''
     Search every line of a given file and grabs the argument for
     Include/IncludeOptional directive, if the argument is a file
-    will append to the "apacheIncludeFiles" then call itsefl one
+    will append to the "apacheIncludeFiles" then call itself one
     more time if the file was not on the "apacheIncludeFiles" list
     and if it finds a directory will call the function "apache_find_files"
     '''
