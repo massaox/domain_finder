@@ -505,6 +505,7 @@ def vhosts_files_parser(vhostsFiles, apacheRoot):
     if len(vhostsFiles) == 0:
         print("No " + bcolors.YELLOW + "Apache" + bcolors.ENDC
               + " vhosts found for the domain")
+        print("")
     for vhost_file in vhostsFiles:
         vhostsDirectives.extend(apache_directive_finder
                                 (vhost_file, apacheRoot))
@@ -743,6 +744,16 @@ def nginx_directive_finder(serverblocks_file):
                         argument = no_white.split()[1].strip('"\';')
                         full_path = nginx_fullpath_include(argument)
                         serverblock[directive] = full_path
+                        print( bcolors.CYAN + "Include  " + bcolors.ENDC + "detected on the block, please look at the file for futher configurations")
+                    except BaseException:
+                        pass
+                elif re.match("^(\"|')?set", no_white):
+                    try:
+                        serverblock = directives[i]
+                        directive = no_white.split()[1].strip('"\'')
+                        argument = no_white.split()[2].strip('"\';')
+                        variable = "variable " + directive
+                        serverblock[variable] = argument
                     except BaseException:
                         pass
                 elif re.match("^(\"|')?server_name", no_white):
@@ -791,6 +802,7 @@ def serverblocks_files_parser(blocksFile):
     if len(blocksFile) == 0:
         print("No " + bcolors.GREEN + "Nginx" + bcolors.ENDC
               + " server blocks were found for the domain")
+        print("")
     blocksDirectives = []
     for serverblock_file in blocksFile:
         blocksDirectives.extend(
@@ -818,13 +830,16 @@ def output_port_ip(listeningPorts):
             print("==============================")
             print(bcolors.YELLOW + "Apache " + bcolors.ENDC +
                   "is listening on %s" % listeningPorts[k])
+            print("")
         elif re.search(nginx, str(k)):
             print("==============================")
             print(bcolors.GREEN + "Nginx " + bcolors.ENDC +
                   "is listening on %s" % listeningPorts[k])
+            print("")
 
 
 def output_apache(vhosts):
+    print("==============================")
     for entry in vhosts:
         for k in sorted(entry.keys()):
             if k == '.Vhost file':
@@ -841,26 +856,31 @@ def output_apache(vhosts):
             else:
                 print(bcolors.LIGHTRED + '%15s' % (str(k)) + ':  '
                       + bcolors.ENDC + str(entry[k]))
+    print("==============================")
 
 
 def output_nginx(blocks):
+    print("==============================")
+    print("==============================")
     for entry in blocks:
         for k in sorted(entry.keys()):
             if k == 'server block':
-                print("==============================")
-                print(bcolors.LIGHTRED + '%15s' % (str(k)) + ':  '
+                print(bcolors.LIGHTRED + '%20s' % (str(k)) + ':  '
                       + bcolors.ENDC + str(entry[k]))
             elif k == 'server_name':
-                print(bcolors.LIGHTRED + '%15s' % (str(k)) + ':  '
+                print(bcolors.LIGHTRED + '%20s' % (str(k)) + ':  '
                       + bcolors.ENDC + str(entry[k]))
-                print("==============================")
             elif k == '.config file':
-                print("==============================")
-                print(bcolors.GREEN + '%15s' % "Server Block" + ':  '
+                print(bcolors.GREEN + '%20s' % "Server Block" + ':  '
+                      + bcolors.ENDC + str(entry[k]))
+            elif k == 'include':
+                print(bcolors.CYAN + '%20s' % "include" + ':  '
                       + bcolors.ENDC + str(entry[k]))
             else:
-                print(bcolors.LIGHTRED + '%15s' % (str(k)) + ':  '
+                print(bcolors.LIGHTRED + '%20s' % (str(k)) + ':  '
                       + bcolors.ENDC + str(entry[k]))
+    print("==============================")
+    print("==============================")
 
 
 def main():
@@ -899,3 +919,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
