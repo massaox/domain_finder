@@ -208,7 +208,7 @@ def output_dns(domain):
                 dns = resp_json['Answer'][0]['data']
                 #print("{} points to{} {} {}".format(domain, bcolors.CYAN, dns,
                 #bcolors.ENDC))
-                print (domain + " points to " + bcolors.CYAN + dns + bcolors.ENDC)
+                print ( "The domain points to " + bcolors.CYAN + dns + bcolors.ENDC)
             except (KeyError):
                 print("There is no A record for this domain")
         else:
@@ -800,6 +800,7 @@ def serverblocks_files_parser(blocksFile):
     and call the function to extract the main directives
     '''
     if len(blocksFile) == 0:
+        print("")
         print("No " + bcolors.GREEN + "Nginx" + bcolors.ENDC
               + " server blocks were found for the domain")
         print("")
@@ -828,6 +829,7 @@ def output_port_ip(listeningPorts):
     for k in listeningPorts:
         if re.search(apache, str(k)):
             print("==============================")
+            print(" ")
             print(bcolors.YELLOW + "Apache " + bcolors.ENDC +
                   "is listening on %s" % listeningPorts[k])
             print("")
@@ -879,8 +881,7 @@ def output_nginx(blocks):
             else:
                 print(bcolors.LIGHTRED + '%20s' % (str(k)) + ':  '
                       + bcolors.ENDC + str(entry[k]))
-    print("==============================")
-    print("==============================")
+    #print("==============================")
 
 
 def main():
