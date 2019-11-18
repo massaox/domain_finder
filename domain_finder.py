@@ -208,7 +208,9 @@ def output_dns(domain):
                 dns = resp_json['Answer'][0]['data']
                 #print("{} points to{} {} {}".format(domain, bcolors.CYAN, dns,
                 #bcolors.ENDC))
-                print ( "The domain points to " + bcolors.CYAN + dns + bcolors.ENDC)
+                print( "The domain points to " + bcolors.CYAN + dns + bcolors.ENDC)
+                print("==============================")
+                print("==============================")
             except (KeyError):
                 print("There is no A record for this domain")
         else:
@@ -503,6 +505,7 @@ def vhosts_files_parser(vhostsFiles, apacheRoot):
     '''
     vhostsDirectives = []
     if len(vhostsFiles) == 0:
+        print("")   
         print("No " + bcolors.YELLOW + "Apache" + bcolors.ENDC
               + " vhosts found for the domain")
         print("")
@@ -744,7 +747,7 @@ def nginx_directive_finder(serverblocks_file):
                         argument = no_white.split()[1].strip('"\';')
                         full_path = nginx_fullpath_include(argument)
                         serverblock[directive] = full_path
-                        print( bcolors.CYAN + "Include  " + bcolors.ENDC + "detected on the block, please look at the file for futher configurations")
+                        #print( bcolors.CYAN + "Include  " + bcolors.ENDC + "detected on the block, please look at the file for futher configurations")
                     except BaseException:
                         pass
                 elif re.match("^(\"|')?set", no_white):
@@ -839,13 +842,19 @@ def output_port_ip(listeningPorts):
                   "is listening on %s" % listeningPorts[k])
             print("")
 
+def vhost_include_warning(vhosts):
+    for vhost in vhosts:
+            if "Include" in vhost:
+                    print("")
+                    print( bcolors.CYAN + "Include  " + bcolors.ENDC + "detected on the vhost, please look at the file for further configurations")
+                    print("")
+
 
 def output_apache(vhosts):
-    print("==============================")
     for entry in vhosts:
+        print("==============================")
         for k in sorted(entry.keys()):
             if k == '.Vhost file':
-                print("==============================")
                 print(bcolors.YELLOW + '%15s' % "Vhost File" + ':  '
                       + bcolors.ENDC + str(entry[k]))
             elif k == '<VirtualHost':
@@ -854,17 +863,24 @@ def output_apache(vhosts):
             elif k == 'ServerName':
                 print(bcolors.LIGHTRED + '%15s' % (str(k)) + ':  '
                       + bcolors.ENDC + str(entry[k]))
-                print("==============================")
             else:
                 print(bcolors.LIGHTRED + '%15s' % (str(k)) + ':  '
                       + bcolors.ENDC + str(entry[k]))
     print("==============================")
+    print("==============================")
+
+
+def block_include_warning(blocks):
+    for block in blocks:
+	    if "include" in block:
+                    print("")
+		    print( bcolors.CYAN + "include  " + bcolors.ENDC + "detected on the block, please look at the file for further configurations")
+                    print("")
 
 
 def output_nginx(blocks):
-    print("==============================")
-    print("==============================")
     for entry in blocks:
+        print("==============================")
         for k in sorted(entry.keys()):
             if k == 'server block':
                 print(bcolors.LIGHTRED + '%20s' % (str(k)) + ':  '
@@ -881,7 +897,7 @@ def output_nginx(blocks):
             else:
                 print(bcolors.LIGHTRED + '%20s' % (str(k)) + ':  '
                       + bcolors.ENDC + str(entry[k]))
-    #print("==============================")
+    print("==============================")
 
 
 def main():
@@ -908,6 +924,7 @@ def main():
         vhosts = vhost_organizer(vhostsDirectives, domain)
         apache_warn_include(vhosts)
         apache_default_log(vhosts)
+        vhost_include_warning(vhosts)
         output_apache(vhosts)
     if isNginx:
         nginxIncludeFiles = get_nginx_include(nginx, nginxIncludeFiles,
@@ -915,6 +932,7 @@ def main():
         blocksFile = nginx_domain_search(nginxIncludeFiles, domain)
         blocksDirectives = serverblocks_files_parser(blocksFile)
         blocks = serverblock_organizer(blocksDirectives, domain)
+        block_include_warning(blocks)
         output_nginx(blocks)
 
 
