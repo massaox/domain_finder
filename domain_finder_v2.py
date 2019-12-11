@@ -664,7 +664,7 @@ def find_blocks(nginxIncludeFiles):
                 for line in config:
                     no_white = line.strip()
                     no_white = no_white.strip(';')
-                    if no_white.startswith('#') or not no_white.strip():
+                    if no_white.startswith('#') or not no_white.strip() or no_white.startswith('type'):
                         pass
                     else:
                         if re.match(r"server($|\s*{)", no_white):
@@ -694,7 +694,11 @@ def find_blocks(nginxIncludeFiles):
                                     server_blocks.append(block)
                                     server_arg = False
                                     block = {}
-                            block[no_white.split()[0]] = no_white.split()[1:]
+                            if no_white.split()[0] in block:
+                                for item in no_white.split()[1:]:
+                                    block[no_white.split()[0]].append(item)
+                            else:
+                                block[no_white.split()[0]] = no_white.split()[1:]
         except (IOError):
             pass                        
     return server_blocks                    
@@ -790,7 +794,7 @@ def replace_root(blocks):
                 root_path =  block[dir][1]
                 root_var = block[dir][0]
             if dir == "root":
-                if not os.path.exists(block[dir][0]):
+                if not os.path.exists(block[dir][0].strip('\"')):
                     root = block[dir][0]
                     root = root.replace(root_var, root_path)
                     new_root = []
