@@ -664,7 +664,7 @@ def find_blocks(nginxIncludeFiles):
                 for line in config:
                     no_white = line.strip()
                     no_white = no_white.strip(';')
-                    if no_white.startswith('#') or not no_white.strip():
+                    if no_white.startswith('#') or not no_white.strip() or no_white.startswith('type'):
                         pass
                     else:
                         if re.match(r"server($|\s*{)", no_white):
