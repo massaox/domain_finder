@@ -775,7 +775,7 @@ def output_apache(vhosts):
                 print(bcolors.LIGHTRED + '%15s' % (str(k)) + ':  '
                       + bcolors.ENDC + str(entry[k]))
     print("==============================")
-    print("==============================")
+    #print("==============================")
 
 
 def block_include_warning(blocks):
@@ -807,15 +807,16 @@ def find_root_var(root):
 
 def output_nginx(blocks):
     nginx_args = ['config file', 'server_name', 'root', 'access_log', 'error_log', 'listen', 'ssl_certificate', 'ssl_certificate_key']
-    for arg in nginx_args:
-        try:
-            for block in blocks:
+    for block in blocks:
+        print("==============================")
+        for arg in nginx_args:
+            try:
                 if arg == "config file":
                     print(bcolors.GREEN + '%15s' % str(arg) + ": "  + bcolors.ENDC + str(block[arg]))
                 else:
                     print(bcolors.LIGHTRED + '%15s' % str(arg) + ": "  + bcolors.ENDC + str(block[arg]))
-        except (KeyError):
-            pass
+            except (KeyError):
+                pass
     print("==============================")
     print("==============================")
     return None
