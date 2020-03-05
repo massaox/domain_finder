@@ -22,7 +22,7 @@ import codecs
 import socket
 
 
-def std_exceptions(etype, value, tb):
+def stdExceptions(etype, value, tb):
     '''
     The following exits cleanly on Ctrl-C or EPIPE
      while treating other exceptions as before.
@@ -36,7 +36,7 @@ def std_exceptions(etype, value, tb):
         sys.__excepthook__(etype, value, tb)
 
 
-sys.excepthook = std_exceptions
+sys.excepthook = stdExceptions
 
 
 class bcolors:
@@ -55,7 +55,7 @@ class bcolors:
     UNDERLINE = '\033[4m'
 
 
-def get_inode_pid_map():
+def getInodePidMap():
     '''
     Create a list of dictionares where the inode listening to connections is
     the key and its pids are the values
@@ -113,7 +113,7 @@ def ipv6(addr):
     return addr
 
 
-def populate_inodes():
+def populateInodes():
     """
     Get all the inodes that are listening to connections
     along with their IP and port.
@@ -147,7 +147,7 @@ def populate_inodes():
     return inodes
 
 
-def get_listeningPorts(inodes, inodePidMap):
+def getListeningPorts(inodes, inodePidMap):
     '''
     Filter down the list of inodes to only ones being used by Apache and Nginx
     only and usues their binary as key and port/ip as valueu.
@@ -174,7 +174,7 @@ def get_listeningPorts(inodes, inodePidMap):
     return listeningPorts
 
 
-def get_domain():
+def getDomain():
     '''
     Function that prompts the user for which domain to look for
     '''
@@ -193,7 +193,7 @@ def get_domain():
     return domain
 
 
-def output_dns(domain):
+def outputDns(domain):
     '''
     Function will attempt to use Google's DNS to retrieve A record, if it can't
     it will resort the the Name Servers configured in the server
@@ -217,7 +217,7 @@ def output_dns(domain):
         get_dns_locally(domain)
 
 
-def output_dns_locally(domain):
+def outputDnsLocally(domain):
     '''
     Looks for the "A" record of the domain using the Name Server
     from the server, if DNS doctrine is enabled on the FW you will
@@ -232,7 +232,7 @@ def output_dns_locally(domain):
         print("There is no A record for this domain")
 
 
-def get_log_dir(varname):
+def getLogDir(varname):
     '''
     Open a bash process to extract the log
     location on Ubuntu/Debian installations
@@ -244,7 +244,7 @@ def get_log_dir(varname):
     return log_path
 
 
-def get_os(op_sys=str(platform.linux_distribution())):
+def getOs(op_sys=str(platform.linux_distribution())):
     '''
     Block to determine if its Ubuntu or RedHat
     installation using the platform module
@@ -284,7 +284,7 @@ def get_os(op_sys=str(platform.linux_distribution())):
     return apache, isApache, apacheIncludeFiles, nginx, isNginx, nginxIncludeFiles
 
 
-def get_apacheRoot(apache):
+def getApacheRoot(apache):
     '''
     Retrieves Apache's document root to be used later if relative log path is
     used.
@@ -297,30 +297,30 @@ def get_apacheRoot(apache):
     return apacheRoot
 
 
-def apache_find_files(directory, regex, apacheRoot, apacheIncludeFiles,
+def apacheFindFiles(directory, regex, apacheRoot, apacheIncludeFiles,
                       apacheIncludeDir):
     '''
     Grabs all files from a directory that matches a regex passed
-    from the function "get_apache_include", at the end of
-    its execution will call out function "get_apache_include"
+    from the function "getApacheInclude", at the end of
+    its execution will call out function "getApacheInclude"
    '''
     for root, dirs, files in os.walk(directory, topdown=False):
         for name in files:
             if fnmatch.fnmatch(name, regex):
                 full_path = os.path.join(root, name)
                 apacheIncludeFiles.append(full_path)
-                get_apache_include(full_path, apacheRoot, apacheIncludeFiles,
+                getApacheInclude(full_path, apacheRoot, apacheIncludeFiles,
                                    apacheIncludeDir)
 
 
-def get_apache_include(conf, apacheRoot, apacheIncludeFiles,
+def getApacheInclude(conf, apacheRoot, apacheIncludeFiles,
                        apacheIncludeDir):
     '''
     Search every line of a given file and grabs the argument for
     Include/IncludeOptional directive, if the argument is a file
     will append to the "apacheIncludeFiles" then call itself one
     more time if the file was not on the "apacheIncludeFiles" list
-    and if it finds a directory will call the function "apache_find_files"
+    and if it finds a directory will call the function "apacheFindFiles"
     '''
     ret = str(conf)
     clean = ret.strip('\"[\', \']\"')
@@ -335,14 +335,14 @@ def get_apache_include(conf, apacheRoot, apacheIncludeFiles,
                     if os.path.isfile(
                             include) and include not in apacheIncludeFiles:
                         apacheIncludeFiles.append(include)
-                        get_apache_include(include, apacheRoot,
+                        getApacheInclude(include, apacheRoot,
                                            apacheIncludeFiles,
                                            apacheIncludeDir)
                     elif os.path.isdir(include):
                         apacheIncludeDir.append(include)
                         regex = "*"
                         if include not in apacheIncludeDir:
-                            apache_find_files(include, regex, apacheRoot,
+                            apacheFindFiles(include, regex, apacheRoot,
                                               apacheIncludeFiles,
                                               apacheIncludeDir)
                     elif not os.path.isdir(include):
@@ -351,7 +351,7 @@ def get_apache_include(conf, apacheRoot, apacheIncludeFiles,
                             regex = "*" + match[2]
                             sanitized = include.replace(regex, "")
                             if sanitized not in apacheIncludeDir:
-                                apache_find_files(sanitized,
+                                apacheFindFiles(sanitized,
                                                   regex, apacheRoot,
                                                   apacheIncludeFiles,
                                                   apacheIncludeDir)
@@ -360,13 +360,13 @@ def get_apache_include(conf, apacheRoot, apacheIncludeFiles,
                     if os.path.isfile(
                             full_path) and include not in apacheIncludeFiles:
                         apacheIncludeFiles.append(full_path)
-                        get_apache_include(full_path, apacheRoot,
+                        getApacheInclude(full_path, apacheRoot,
                                            apacheIncludeFiles,
                                            apacheIncludeDir)
                     elif os.path.isdir(full_path):
                         regex = "*"
                         if full_path not in apacheIncludeDir:
-                            apache_find_files(full_path,
+                            apacheFindFiles(full_path,
                                               regex, apacheRoot,
                                               apacheIncludeFiles,
                                               apacheIncludeDir)
@@ -376,20 +376,20 @@ def get_apache_include(conf, apacheRoot, apacheIncludeFiles,
                             regex = "*" + match[2]
                             sanitized = full_path.replace(regex, "")
                             if sanitized not in apacheIncludeDir:
-                                apache_find_files(sanitized, regex,
+                                apacheFindFiles(sanitized, regex,
                                                   apacheRoot, apacheIncludeFiles,
                                                   apacheIncludeDir)
     return apacheIncludeFiles
 
 
-def apache_fullpath_log(argument, apacheRoot):
+def apacheFullPathLog(argument, apacheRoot):
     '''
     Function merely created for copy and paste ease,
     it will display the full path to the logs, rather then the relative one.
     '''
     full_log = ""
     if argument.startswith("$"):
-        log_path = get_log_dir('APACHE_LOG_DIR')
+        log_path = getLogDir('APACHE_LOG_DIR')
         log_file = argument.split('/')[-1]
         full_log = log_path + "/" + log_file
     elif not argument.startswith("/"):
@@ -399,7 +399,7 @@ def apache_fullpath_log(argument, apacheRoot):
     return full_log
 
 
-def apache_domain_search(apacheIncludeFiles, domain):
+def apacheDomainSearch(apacheIncludeFiles, domain):
     '''
     Once the list "apacheIncludeFiles" is populated
     this function goes over each file and looks for the domain in question
@@ -416,7 +416,7 @@ def apache_domain_search(apacheIncludeFiles, domain):
     return vhosts
 
 
-def sanitize_args(argument):
+def sanitizeArgs(argument):
     '''
     Strips down all single and double quotes from lines
     '''
@@ -427,7 +427,7 @@ def sanitize_args(argument):
     return sanitized
 
 
-def apache_directive_finder(vhosts_file, apacheRoot):
+def apacheDirectiveFinder(vhosts_file, apacheRoot):
     '''
     Goes  over the select file(s) and returns only the relevant directives
     '''
@@ -460,7 +460,7 @@ def apache_directive_finder(vhosts_file, apacheRoot):
                         directive = no_white.split()[0].strip('"\'')
                         argument = no_white.split(
                         )[1].strip('"\'').split(":")[0]
-                        full_log = apache_fullpath_log(argument, apacheRoot)
+                        full_log = apacheFullPathLog(argument, apacheRoot)
                         vhost[directive] = full_log
                     except BaseException:
                         pass
@@ -480,14 +480,14 @@ def apache_directive_finder(vhosts_file, apacheRoot):
                         no_white_list = no_white.split()
                         no_white_list.pop(0)
                         argument = no_white_list
-                        sanitized = sanitize_args(argument)
+                        sanitized = sanitizeArgs(argument)
                         vhost[directive] = sanitized
                     else:
                         directive = no_white.split()[0].strip('"\'')
                         no_white_list = no_white.split()
                         no_white_list.pop(0)
                         argument = no_white_list
-                        sanitized = sanitize_args(argument)
+                        sanitized = sanitizeArgs(argument)
                         vhost["ServerAlias"] += sanitized
                 elif re.match("</VirtualHost", no_white):
                     i += 1
@@ -496,7 +496,7 @@ def apache_directive_finder(vhosts_file, apacheRoot):
     return directives
 
 
-def vhosts_files_parser(vhostsFiles, apacheRoot):
+def vhostsFilesParser(vhostsFiles, apacheRoot):
     '''
     Goes over all the config files where the domain is
     mentioned and call the function to extract the main directives
@@ -506,12 +506,12 @@ def vhosts_files_parser(vhostsFiles, apacheRoot):
         print("No " + bcolors.YELLOW + "Apache" + bcolors.ENDC
               + " vhosts found for the domain")
     for vhost_file in vhostsFiles:
-        vhostsDirectives.extend(apache_directive_finder
+        vhostsDirectives.extend(apacheDirectiveFinder
                                 (vhost_file, apacheRoot))
     return vhostsDirectives
 
 
-def vhost_organizer(vhostsDirectives, domain):
+def vhostOrganizer(vhostsDirectives, domain):
     '''
     Takes all the individual vhosts extract from previous function and
     removes all that does contain the "domain " in ServerName or ServerAlis
@@ -528,13 +528,13 @@ def vhost_organizer(vhostsDirectives, domain):
     return vhosts
 
 
-def apache_warn_include(vhosts):
+def apacheWarnInclude(vhosts):
     if 'Include' in vhosts:
         print("include in the vhost, some directives might be overwritten")
     return vhosts
 
 
-def apache_default_log(vhosts):
+def apacheDefaultLog(vhosts):
     for vhost in vhosts:
         if 'SSLEngine' in vhost:
             if 'CustomLog' not in vhost:
@@ -549,28 +549,28 @@ def apache_default_log(vhosts):
     return vhosts
 
 
-def nginx_find_files(directory, regex, nginxIncludeFiles, nginxIncludeDir):
+def nginxFindFiles(directory, regex, nginxIncludeFiles, nginxIncludeDir):
     '''
     Grabs all files from a directory that matches a regex passed
-    from the function "get_nginx_include", at the end of its
-    execution will call out function "get_nginx_include"
+    from the function "getNginxInclude", at the end of its
+    execution will call out function "getNginxInclude"
    '''
     for root, dirs, files in os.walk(directory, topdown=False):
         for name in files:
             if fnmatch.fnmatch(name, regex):
                 full_path = os.path.join(root, name)
                 nginxIncludeFiles.append(full_path)
-                get_nginx_include(full_path, nginxIncludeFiles,
+                getNginxInclude(full_path, nginxIncludeFiles,
                                   nginxIncludeDir)
 
 
-def get_nginx_include(conf, nginxIncludeFiles, nginxIncludeDir):
+def getNginxInclude(conf, nginxIncludeFiles, nginxIncludeDir):
     '''
     Search every line of a given file and grabs the argument for
     include/includeOptional directive, if the argument is a file
     will append to the "nginxIncludeFiles" then call itsefl one
     more time if the file was not on the "nginxIncludeFiles" list
-    and if it finds a directory will call the function "nginx_find_files"
+    and if it finds a directory will call the function "nginxFindFiles"
     '''
     ret = str(conf)
     clean = ret.strip('\"[\', \']\"')
@@ -585,12 +585,12 @@ def get_nginx_include(conf, nginxIncludeFiles, nginxIncludeDir):
                     if os.path.isfile(include):
                         if include not in nginxIncludeFiles:
                             nginxIncludeFiles.append(include)
-                            get_nginx_include(include, nginxIncludeFiles,
+                            getNginxInclude(include, nginxIncludeFiles,
                                               nginxIncludeDir)
                     elif os.path.isdir(include):
                         regex = "*"
                         if include not in nginxIncludeDir:
-                            nginx_find_files(include, regex, nginxIncludeFiles,
+                            nginxFindFiles(include, regex, nginxIncludeFiles,
                                              nginxIncludeDir)
                     elif not os.path.isdir(include):
                         if fnmatch.fnmatch(include, "*[*]*"):
@@ -598,7 +598,7 @@ def get_nginx_include(conf, nginxIncludeFiles, nginxIncludeDir):
                             regex = "*" + match[2]
                             sanitized = include.replace(regex, "")
                             if sanitized not in nginxIncludeDir:
-                                nginx_find_files(
+                                nginxFindFiles(
                                     sanitized, regex, nginxIncludeFiles,
                                     nginxIncludeDir)
                 else:
@@ -606,12 +606,12 @@ def get_nginx_include(conf, nginxIncludeFiles, nginxIncludeDir):
                     if os.path.isfile(full_path):
                         if include not in nginxIncludeFiles:
                             nginxIncludeFiles.append(full_path)
-                            get_nginx_include(full_path, nginxIncludeFiles,
+                            getNginxInclude(full_path, nginxIncludeFiles,
                                               nginxIncludeDir)
                     elif os.path.isdir(full_path):
                         regex = "*"
                         if full_path not in nginxIncludeDir:
-                            nginx_find_files(
+                            nginxFindFiles(
                                 full_path, regex, nginxIncludeFiles,
                                 nginxIncludeDir)
                     elif not os.path.isdir(full_path):
@@ -620,13 +620,13 @@ def get_nginx_include(conf, nginxIncludeFiles, nginxIncludeDir):
                             regex = "*" + match[2]
                             sanitized = full_path.replace(regex, "")
                             if sanitized not in nginxIncludeDir:
-                                nginx_find_files(
+                                nginxFindFiles(
                                     sanitized, regex, nginxIncludeFiles,
                                     nginxIncludeDir)
     return nginxIncludeFiles
 
 
-def sanitize_args(argument):
+def sanitizeArgs(argument):
     '''
     Strips down all single and double quotes from lines
     '''
@@ -637,7 +637,7 @@ def sanitize_args(argument):
     return sanitized
 
 
-def nginx_fullpath_include(argument):
+def nginxFullPathInclude(argument):
     '''
     Function merely created for copy and paste ease, it will display
     the full path to the include, rather then the relative one.
@@ -649,8 +649,8 @@ def nginx_fullpath_include(argument):
         full_path = argument
     return full_path
 
-def find_blocks(nginxIncludeFiles):
-    server_blocks = []
+def findBlocks(nginxIncludeFiles):
+    serverBlocks = []
     close_brackets = False
     server_arg = False
     inside_block = False
@@ -691,7 +691,7 @@ def find_blocks(nginxIncludeFiles):
                                     config = []
                                     config.append(file)
                                     block["config file"] = config
-                                    server_blocks.append(block)
+                                    serverBlocks.append(block)
                                     server_arg = False
                                     block = {}
                             if no_white.split()[0] in block:
@@ -701,11 +701,11 @@ def find_blocks(nginxIncludeFiles):
                                 block[no_white.split()[0]] = no_white.split()[1:]
         except (IOError):
             pass                        
-    return server_blocks                    
+    return serverBlocks                    
 
 
-def get_include(server_blocks):
-    for server_block in server_blocks:
+def getInclude(serverBlocks):
+    for server_block in serverBlocks:
         if "include" in server_block:
             file =  str(server_block["include"])
             file = file.strip('[]\'')
@@ -720,12 +720,12 @@ def get_include(server_blocks):
                             server_block[no_white.split()[0]] = no_white.split()[1:]
             except (IOError):
                 pass
-    return server_blocks
+    return serverBlocks
 	
 
-def find_domain(server_blocks,domain):
+def findDomain(serverBlocks,domain):
     block = []
-    for server_block in server_blocks:
+    for server_block in serverBlocks:
         for key in server_block:
             if domain  in server_block[key]:
                 block.append(dict(server_block))
@@ -733,7 +733,7 @@ def find_domain(server_blocks,domain):
 
 
 
-def output_port_ip(listeningPorts):
+def outputPortIp(listeningPorts):
     apache = "(httpd|apache)"
     nginx = "(nginx)"
     for k in listeningPorts:
@@ -749,13 +749,13 @@ def output_port_ip(listeningPorts):
             print("==============================")
 
 
-def vhost_include_warning(vhosts):
+def vhostIncludeWarning(vhosts):
     for vhost in vhosts:
             if "Include" in vhost:
                     print( bcolors.CYAN + "Include  " + bcolors.ENDC + "detected on the vhost, please look at the file for further configurations")
 
 
-def output_apache(vhosts):
+def outputApache(vhosts):
     for entry in vhosts:
         print("==============================")
         for k in sorted(entry.keys()):
@@ -778,38 +778,38 @@ def output_apache(vhosts):
     #print("==============================")
 
 
-def block_include_warning(blocks):
+def blockIncludeWarning(blocks):
     for block in blocks:
 	    if "include" in block:
                     print("")
 		    print( bcolors.CYAN + "include  " + bcolors.ENDC + "detected on the block, please look at the file for further configurations")
                     print("")
 
-def replace_root(blocks):
+def replaceRoot(blocks):
     root = ""
-    root_var = ""
+    rootVar = ""
     for block in blocks:
         for dir in block:
             if dir == "set":
-                root_path =  block[dir][1]
-                root_var = block[dir][0]
+                rootPath =  block[dir][1]
+                rootVar = block[dir][0]
             if dir == "root":
                 if not os.path.exists(block[dir][0].strip('\"')):
                     root = block[dir][0]
-                    root = root.replace(root_var, root_path)
-                    new_root = []
-                    new_root.append(root)
-                    block['root'] = new_root
+                    root = root.replace(rootVar, rootPath)
+                    newRoot = []
+                    newRoot.append(root)
+                    block['root'] = newRoot
     return blocks
 
-def find_root_var(root):
+def findRootVar(root):
     print root        
 
-def output_nginx(blocks):
-    nginx_args = ['config file', 'server_name', 'root', 'access_log', 'error_log', 'listen', 'ssl_certificate', 'ssl_certificate_key']
+def OutputNginx(blocks):
+    nginxArgs = ['config file', 'server_name', 'root', 'access_log', 'error_log', 'listen', 'ssl_certificate', 'ssl_certificate_key']
     for block in blocks:
         print("==============================")
-        for arg in nginx_args:
+        for arg in nginxArgs:
             try:
                 if arg == "config file":
                     print(bcolors.GREEN + '%15s' % str(arg) + ": "  + bcolors.ENDC + str(block[arg]))
@@ -828,34 +828,34 @@ def main():
     isNginx = False
     nginxIncludeDir = []
 
-    domain = get_domain()
-    output_dns(domain)
-    apache, isApache, apacheIncludeFiles, nginx, isNginx, nginxIncludeFiles = get_os()
-    inodePidMap = get_inode_pid_map()
-    inodes = populate_inodes()
-    listeningPorts = get_listeningPorts(inodes, inodePidMap)
-    portOutput = output_port_ip(listeningPorts)
+    domain = getDomain()
+    outputDns(domain)
+    apache, isApache, apacheIncludeFiles, nginx, isNginx, nginxIncludeFiles = getOs()
+    inodePidMap = getInodePidMap()
+    inodes = populateInodes()
+    listeningPorts = getListeningPorts(inodes, inodePidMap)
+    portOutput = outputPortIp(listeningPorts)
 
     if isApache:
-        apacheRoot = get_apacheRoot(apache)
-        apacheIncludeFiles = get_apache_include(apache, apacheRoot,
+        apacheRoot = getApacheRoot(apache)
+        apacheIncludeFiles = getApacheInclude(apache, apacheRoot,
                                                 apacheIncludeFiles,
                                                 apacheIncludeDir)
-        vhostsFiles = apache_domain_search(apacheIncludeFiles, domain)
-        vhostsDirectives = vhosts_files_parser(vhostsFiles, apacheRoot)
-        vhosts = vhost_organizer(vhostsDirectives, domain)
-        apache_warn_include(vhosts)
-        apache_default_log(vhosts)
-        vhost_include_warning(vhosts)
-        output_apache(vhosts)
+        vhostsFiles = apacheDomainSearch(apacheIncludeFiles, domain)
+        vhostsDirectives = vhostsFilesParser(vhostsFiles, apacheRoot)
+        vhosts = vhostOrganizer(vhostsDirectives, domain)
+        apacheWarnInclude(vhosts)
+        apacheDefaultLog(vhosts)
+        vhostIncludeWarning(vhosts)
+        outputApache(vhosts)
     if isNginx:
-        nginxIncludeFiles = get_nginx_include(nginx, nginxIncludeFiles,
+        nginxIncludeFiles = getNginxInclude(nginx, nginxIncludeFiles,
                                               nginxIncludeDir)
-        server_blocks = find_blocks(nginxIncludeFiles)
-        server_blocks = get_include(server_blocks)
-        blocks = find_domain(server_blocks,domain)
-        blocks = replace_root(blocks)
-        output_nginx(blocks)
+        serverBlocks = findBlocks(nginxIncludeFiles)
+        serverBlocks = getInclude(serverBlocks)
+        blocks = findDomain(serverBlocks,domain)
+        blocks = replaceRoot(blocks)
+        OutputNginx(blocks)
 
 
 if __name__ == "__main__":
