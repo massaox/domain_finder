@@ -714,7 +714,7 @@ def get_include(server_blocks):
                     for line in config:
                         no_white = line.strip()
                         no_white = no_white.strip(';')
-                        if no_white.startswith('#'):
+                        if no_white.startswith('#') or not bool(no_white.strip()):
                             pass
                         else:
                             server_block[no_white.split()[0]] = no_white.split()[1:]
