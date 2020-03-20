@@ -445,7 +445,7 @@ def apacheDirectiveFinder(vhosts_file, apacheRoot):
                     directives.append(d1)
                     d1[".Vhost file"] = vhosts_file
                 elif re.match(
-                        "^(\"|')?ServerName|^(\"|')?DocumentRoot", no_white):
+                        "^(\"|')?DocumentRoot", no_white):
                     try:
                         vhost = directives[i]
                         directive = no_white.split()[0].strip('"\'')
@@ -454,12 +454,26 @@ def apacheDirectiveFinder(vhosts_file, apacheRoot):
                         vhost[directive] = argument
                     except BaseException:
                         pass
+                elif re.match(
+                        "^(\"|')?ServerName", no_white):
+                    try:
+                        vhost = directives[i]
+                        directive = no_white.split()[0].strip('"\'')
+                        if "http" in no_white:
+                            argument = no_white.split(
+                            )[1].strip('"\'').split("//")[1].split(":")[0]
+                        else:
+                            argument = no_white.split(
+                            )[1].strip('"\'').split(":")[0]
+                        vhost[directive] = argument
+                    except BaseException:
+                        pass
                 elif re.match("^(\"|')?CustomLog|^(\"|')?ErrorLog", no_white):
                     try:
                         vhost = directives[i]
                         directive = no_white.split()[0].strip('"\'')
                         argument = no_white.split(
-                        )[1].strip('"\'').split(":")[0]
+                        )[1].strip('"\'').split("//")[1].split(":")[0]
                         full_log = apacheFullPathLog(argument, apacheRoot)
                         vhost[directive] = full_log
                     except BaseException:
